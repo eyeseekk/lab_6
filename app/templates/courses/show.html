@@ -1,0 +1,104 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="title-area position-relative" style="background-image: url({{ course.bg_image.url }});">
+    <div class="h-100 w-100 py-5 d-flex text-center position-absolute" style="background-color: rgba(0, 0, 0, 0.65);">
+        <div class="m-auto">
+            <h1 class="title mb-3 font-weight-bold">{{ course.name }}</h1>
+            <p class="mb-3 mx-auto">
+                {{ course.category.name }} | <span>★</span> <span>{{ "%.2f" | format(course.rating) }}</span>
+            </p>
+            <div class="container">
+                <p class="description w-75 mb-5 mx-auto">{{ course.short_desc }}</p>
+            </div>
+            {% if current_user.is_authenticated %}
+                <a href="#" class="btn btn-outline-light btn-lg">Перейти к материалам курса</a>
+            {% else %}\n                <button class=\"btn btn-outline-light btn-lg\" disabled>Записаться</button>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<div class="container mt-5">
+    <section class="about mb-5">
+        <h2 class="mb-3 text-center text-uppercase font-weight-bold">О курсе</h2>
+        <p>{{ course.full_desc }}</p>
+    </section>
+
+    <section class="reviews mb-5">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h3 class="text-uppercase font-weight-bold">Последние отзывы</h3>
+            <a href="{{ url_for('courses.reviews', course_id=course.id) }}" class="btn btn-dark">Все отзывы</a>
+        </div>
+
+        {% if reviews %}
+            <div class="row row-cols-1 g-3">
+                {% for review in reviews %}
+                    <div class="col">
+                        <div class="card shadow-sm">
+                            <div class="card-body">
+                                <div class="d-flex justify-content-between mb-2">
+                                    <h5 class="card-title mb-0">{{ review.user.full_name }}</h5>
+                                    <span class="text-muted small">{{ review.created_at.strftime('%d.%m.%Y %H:%M') }}</span>
+                                </div>
+                                <div class="mb-2 text-warning">
+                                    ★ {{ review.rating }} — <span class="text-dark">{{ review.rating_text }}</span>
+                                </div>
+                                <p class="card-text">{{ review.text }}</p>
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <p class="text-muted text-center py-3">Отзывов к этому курсу ещё нет.</p>
+        {% endif %}
+    </section>
+
+    <section class="my-5 border-top pt-4">
+        {% if current_user.is_authenticated %}
+            {% if not user_review %}
+            <div class="card">
+                <div class="card-header bg-dark text-white">
+                    <h4 class="mb-0">Оставить отзыв</h4>
+                </div>
+                <div class="card-body">
+                    <form method="POST" action="{{ url_for('courses.add_review', course_id=course.id) }}">
+                        <div class="mb-3">
+                            <label for="rating" class="form-label">Оценка</label>
+                            <select name="rating" id="rating" class="form-select">
+                                <option value="5" selected>5 — отлично</option>
+                                <option value="4">4 — хорошо</option>
+                                <option value="3">3 — удовлетворительно</option>
+                                <option value="2">2 — неудовлетворительно</option>
+                                <option value="1">1 — плохо</option>
+                                <option value="0">0 — ужасно</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="text" class="form-label">Текст отзыва</label>
+                            <textarea name="text" id="text" class="form-control" rows="4" placeholder="Поделитесь своим мнением о курсе..." required></textarea>
+                        </div>
+                        <button type="submit" class="btn btn-success">Отправить отзыв</button>
+                    </form>
+                </div>
+            </div>
+            {% else %}
+            <div class="alert alert-info text-center">
+                <h5 class="mb-2">Ваш отзыв</h5>
+                <p class="mb-1">
+                    <strong>Оценка:</strong> ★ {{ user_review.rating }} - {{ user_review.rating_text }}
+                </p>\n                <p>{{ user_review.text }}</p>
+                <small class="text-muted">Оставлен {{ user_review.created_at.strftime('%d.%m.%Y %H:%M') }}</small>
+            </div>
+            {% endif %}
+        {% else %}
+            <div class="alert alert-warning text-center">
+                <p class="mb-0">
+                    <a href="{{ url_for('auth.login', next=url_for('courses.show', course_id=course.id)) }}">Войдите</a>, чтобы оставить отзыв.
+                </p>
+            </div>
+        {% endif %}
+    </section>
+</div>
+{% endblock %}

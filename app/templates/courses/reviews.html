@@ -1,0 +1,103 @@
+{% extends 'base.html' %}
+{% from 'pagination.html' import render_pagination %}\n\n{% block content %}
+<div class="container mt-4">
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{{ url_for('courses.index') }}">Курсы</a></li>
+            <li class="breadcrumb-item"><a href="{{ url_for('courses.show', course_id=course.id) }}">{{ course.name }}</a></li>
+            <li class="breadcrumb-item active">Все отзывы</li>
+        </ol>
+    </nav>
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>Отзывы о курсе "{{ course.name }}"</h2>
+        <span class="badge bg-dark fs-5 p-2">
+            ★ {{ "%.2f" | format(course.rating) }} ({{ course.reviews|length }} отзывов)
+        </span>
+    </div>
+
+    <div class="card mb-4">
+        <div class="card-body">
+            <form method="GET" class="row align-items-end">
+                <div class="col-md-8">
+                    <label for="sort" class="form-label">Сортировать по:</label>
+                    <select name="sort" id="sort" class="form-select">
+                        <option value="newest" {% if sort == 'newest' %}selected{% endif %}>По новизне (сначала новые)</option>
+                        <option value="positive" {% if sort == 'positive' %}selected{% endif %}>Сначала положительные</option>
+                        <option value="negative" {% if sort == 'negative' %}selected{% endif %}>Сначала отрицательные</option>
+                    </select>
+                </div>
+                <div class="col-md-4 mt-2 mt-md-0">
+                    <button type="submit" class="btn btn-primary w-100">Применить</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    {% if reviews %}
+        <div class="reviews-list">
+            {% for review in reviews %}\n            <div class="card mb-3 shadow-sm">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start mb-2">
+                        <div>
+                            <h5 class="mb-1">{{ review.user.full_name }}</h5>
+                            <div class="mb-2">
+                                <span class="badge bg-warning text-dark fs-6">
+                                    ★ {{ review.rating }} - {{ review.rating_text }}
+                                </span>
+                            </div>
+                        </div>
+                        <small class="text-muted">{{ review.created_at.strftime('%d.%m.%Y %H:%M') }}</small>
+                    </div>
+                    <p class="card-text">{{ review.text }}</p>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+        <div class="mt-4">
+            {{ render_pagination(pagination, 'courses.reviews', {'course_id': course.id, 'sort': sort}) }}
+        </div>
+    {% else %}
+        <div class="alert alert-secondary text-center">
+            <p class="mb-0">Пока нет ни одного отзыва. Будьте первым!</p>
+        </div>
+    {% endif %}
+
+    <div class="my-5 border-top pt-4">
+        {% if current_user.is_authenticated %}
+            {% if not user_review %}
+                <div class="card">
+                    <div class="card-header bg-dark text-white">
+                        <h4 class="mb-0">Оставить отзыв</h4>
+                    </div>
+                    <div class="card-body">
+                        <form method="POST" action="{{ url_for('courses.add_review', course_id=course.id) }}">
+                            <div class="mb-3">
+                                <label for="rating" class="form-label">Оценка</label>
+                                <select name="rating" id="rating" class="form-select">
+                                    <option value="5" selected>5 — отлично</option>
+                                    <option value="4">4 — хорошо</option>
+                                    <option value="3">3 — удовлетворительно</option>
+                                    <option value="2">2 — неудовлетворительно</option>
+                                    <option value="1">1 — плохо</option>
+                                    <option value="0">0 — ужасно</option>
+                                </select>
+                            </div>
+                            <div class="mb-3">
+                                <label for="text" class="form-label">Текст отзыва</label>
+                                <textarea name="text" id="text" class="form-control" rows="4" placeholder="Поделитесь своим мнением о курсе..." required></textarea>
+                            </div>
+                            <button type="submit" class="btn btn-success">Отправить отзыв</button>
+                        </form>
+                    </div>
+                </div>
+            {% else %}
+                <div class="alert alert-info text-center">
+                    <h5>Ваш отзыв уже добавлен к этому курсу.</h5>
+                </div>
+            {% endif %}
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
